@@ -1,10 +1,15 @@
 # OpenReply — Production stack
 #
-# Runs the full app from the repo Dockerfile, unlike docker-compose.yml which
-# only starts Postgres + Redis for local `next dev` on the host.
+# Runs the published app image from Docker Hub, unlike docker-compose.yml
+# which only starts Postgres + Redis for local `next dev` on the host. The
+# image is built and pushed separately — this file never builds from the
+# Dockerfile:
+#
+#   docker build -t jorgeortega593/openreply:1.0 .
+#   docker push  jorgeortega593/openreply:1.0
 #
 #   cp .env.example .env   # fill it in; also set POSTGRES_PASSWORD
-#   docker compose -f docker-compose.prod.yml up -d --build
+#   docker compose -f docker-compose.prod.yml up -d
 #
 # Five services:
 #   postgres / redis — infrastructure (health-checked, persistent volumes)
@@ -21,8 +26,8 @@
 # vars) is passed through from .env.
 
 x-app: &app
-  build: .
-  image: openreply:latest
+  # Published image — build/push happens outside this file (see header).
+  image: jorgeortega593/openreply:1.0
   # Same set for web, worker, and migrate: DATABASE_URL, REDIS_URL and
   # ENCRYPTION_KEY must match exactly across processes or DM sends fail to
   # decrypt.

@@ -47,6 +47,10 @@ COPY --from=build /app/lib ./lib
 COPY --from=build /app/worker ./worker
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/scripts ./scripts
+# A Windows checkout (core.autocrlf=true) stores cron.sh with CRLF line
+# endings; sh then dies on `set -u\r` ("Illegal option -") in a restart loop.
+# Normalize at build time so the image never depends on the checkout config.
+RUN sed -i 's/\r$//' scripts/cron.sh
 COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 COPY --from=build /app/next.config.ts ./next.config.ts
 COPY --from=build /app/tsconfig.json ./tsconfig.json
