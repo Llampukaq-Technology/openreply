@@ -81,8 +81,10 @@ services:
 
   web:
     <<: *app
-    ports:
-      - "${WEB_PORT:-3000}:3000"
+    # Dokploy: its proxy publishes the domain; the container only needs the
+    # port inside the compose network — no host port binding here.
+    expose:
+      - "3000"
     depends_on:
       postgres:
         condition: service_healthy
