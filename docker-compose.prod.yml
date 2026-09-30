@@ -1,0 +1,126 @@
+# OpenReply — Production stack
+#
+# Runs the full app from the repo Dockerfile, unlike docker-compose.yml which
+# only starts Postgres + Redis for local `next dev` on the host.
+#
+#   cp .env.example .env   # fill it in; also set POSTGRES_PASSWORD
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Five services:
+#   postgres / redis — infrastructure (health-checked, persistent volumes)
+#   migrate          — one-shot `prisma migrate deploy`; runs at start, never
+#                     at build time (the build network can't reach the DB)
+#   web              — next start, the only service with a public port
+#   worker           — same image, runs the DM worker
+#   cron             — same image, runs scripts/cron.sh against the web service
+#                     (vercel.json crons don't exist off Vercel)
+#
+# DATABASE_URL / REDIS_URL from .env are overridden to the internal service
+# hostnames, so .env keeps its localhost values for local dev. Everything else
+# (NEXTAUTH_URL, NEXTAUTH_SECRET, CRON_SECRET, ENCRYPTION_KEY, Meta/Resend
+# vars) is passed through from .env.
+
+x-app: &app
+  build: .
+  image: openreply:latest
+  # Same set for web, worker, and migrate: DATABASE_URL, REDIS_URL and
+  # ENCRYPTION_KEY must match exactly across processes or DM sends fail to
+  # decrypt.
+  env_file: .env
+  environment:
+    DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/openreply
+    REDIS_URL: redis://redis:6379
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: openreply
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    # Not published to the host: reach it through the compose network only.
+    # To inspect from the host run a psql inside this container.
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d openreply"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  migrate:
+    <<: *app
+    # One-shot: exits 0 once migrations are applied. Web/worker/cron wait for
+    # this via service_completed_successfully.
+    restart: "no"
+    command: ["npx", "prisma", "migrate", "deploy"]
+
+  web:
+    <<: *app
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    # wget is installed in the image (node:20-slim ships neither wget nor curl)
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  worker:
+    <<: *app
+    command: ["npm", "run", "worker"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  cron:
+    <<: *app
+    command: ["sh", "scripts/cron.sh"]
+    # YAML merge is shallow: this map REPLACES the anchor's, so restate the
+    # internal URLs (cron.sh itself only needs CRON_BASE_URL/CRON_SECRET).
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/openreply
+      REDIS_URL: redis://redis:6379
+      CRON_BASE_URL: http://web:3000
+      # cron.sh falls back to NEXTAUTH_SECRET if CRON_SECRET is unset.
+      CRON_SECRET: ${CRON_SECRET:-}
+    # service_healthy matters: started alone, the first run fires while the
+    # web app is still booting and dies on connection refused.
+    depends_on:
+      web:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  redisdata:
