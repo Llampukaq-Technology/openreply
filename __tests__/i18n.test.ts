@@ -1,17 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { createI18n, resolveLocale } from "../lib/i18n";
 import zhTW from "../lib/i18n/zh-TW.json";
+import es from "../lib/i18n/es.json";
 
 describe("interface translations", () => {
-  it("keeps English as the default for absent or unsupported preferences", () => {
+  it("falls back to the default locale for absent or unsupported preferences", () => {
     for (const value of [undefined, null, "", "fr", "zh-CN", "../zh-TW"]) {
-      expect(resolveLocale(value)).toBe("en");
+      expect(resolveLocale(value)).toBe("es");
     }
+    expect(resolveLocale("en")).toBe("en");
+    expect(resolveLocale("es")).toBe("es");
     expect(resolveLocale("zh-TW")).toBe("zh-TW");
   });
 
-  it("renders both interface languages from the same keys", () => {
+  it("renders every interface language from the same keys", () => {
     expect(createI18n("en").t("Campaigns")).toBe("Campaigns");
+    expect(createI18n("es").t("Campaigns")).toBe("Campañas");
     expect(createI18n("zh-TW").t("Campaigns")).toBe("自動回覆活動");
   });
 
@@ -19,6 +23,9 @@ describe("interface translations", () => {
     const values = { count: 2 };
     expect(createI18n("en").t("{count} connected accounts", values)).toBe(
       "2 connected accounts",
+    );
+    expect(createI18n("es").t("{count} connected accounts", values)).toBe(
+      "2 cuentas conectadas",
     );
     expect(createI18n("zh-TW").t("{count} connected accounts", values)).toBe(
       "已連接 2 個帳號",
@@ -49,10 +56,16 @@ describe("interface translations", () => {
   it("has complete, plain-text translations with matching interpolation fields", () => {
     const placeholders = (text: string) =>
       [...text.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
-    for (const [source, translation] of Object.entries(zhTW)) {
-      expect(translation.trim(), source).not.toBe("");
-      expect(placeholders(translation), source).toEqual(placeholders(source));
-      expect(source, source).not.toMatch(/&(?:[a-z]+|#\d+);/i);
+    for (const catalog of [zhTW, es]) {
+      for (const [source, translation] of Object.entries(catalog)) {
+        expect(translation.trim(), source).not.toBe("");
+        expect(placeholders(translation), source).toEqual(placeholders(source));
+        expect(source, source).not.toMatch(/&(?:[a-z]+|#\d+);/i);
+      }
     }
+  });
+
+  it("keeps every locale on the same message keys", () => {
+    expect(Object.keys(es).sort()).toEqual(Object.keys(zhTW).sort());
   });
 });

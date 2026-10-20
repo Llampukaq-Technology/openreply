@@ -1,15 +1,24 @@
 import zhTW from "./zh-TW.json";
+import es from "./es.json";
 
 export const LOCALE_COOKIE = "openreply-locale";
-export type Locale = "en" | "zh-TW";
+export type Locale = "en" | "es" | "zh-TW";
 export type MessageKey = keyof typeof zhTW;
 
+// The product ships in Spanish; English and 繁體中文 stay selectable.
+export const DEFAULT_LOCALE: Locale = "es";
+
+const catalogs: Record<Exclude<Locale, "en">, Record<MessageKey, string>> = {
+  "zh-TW": zhTW,
+  es,
+};
+
 export function isLocale(value: unknown): value is Locale {
-  return value === "en" || value === "zh-TW";
+  return value === "en" || value === "es" || value === "zh-TW";
 }
 
 export function resolveLocale(value: unknown): Locale {
-  return isLocale(value) ? value : "en";
+  return isLocale(value) ? value : DEFAULT_LOCALE;
 }
 
 type Placeholders<S extends string> =
@@ -51,9 +60,16 @@ const labels: Record<string, StaticMessageKey> = {
   Sun: "Sun",
 };
 
-export function createI18n(locale: Locale) {
+export interface I18n {
+  locale: Locale;
+  t: <K extends MessageKey>(key: K, ...args: MessageArgs<K>) => string;
+  label: (value: string) => string;
+}
+
+export function createI18n(locale: Locale): I18n {
   function t<K extends MessageKey>(key: K, ...args: MessageArgs<K>): string {
-    const message = locale === "zh-TW" ? zhTW[key] : key;
+    const catalog = locale === "en" ? undefined : catalogs[locale];
+    const message = catalog?.[key] ?? key;
     const values = args[0] as Record<string, string | number> | undefined;
     return message.replace(/\{(\w+)\}/g, (placeholder, name: string) =>
       values?.[name] === undefined ? placeholder : String(values[name]),
@@ -68,4 +84,3 @@ export function createI18n(locale: Locale) {
   };
 }
 
-export type I18n = ReturnType<typeof createI18n>;
