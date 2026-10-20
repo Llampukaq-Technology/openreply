@@ -27,7 +27,7 @@
 
 x-app: &app
   # Published image — build/push happens outside this file (see header).
-  image: jorgeortega593/openreply:1.0
+  image: jorgeortega593/openreply:1.1
   # Same set for web, worker, and migrate: DATABASE_URL, REDIS_URL and
   # ENCRYPTION_KEY must match exactly across processes or DM sends fail to
   # decrypt.
