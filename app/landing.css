@@ -71,24 +71,25 @@
   color: var(--or-orange);
   font-weight: 400;
 }
+.or-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.or-byline {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--or-muted);
+}
+.or-byline:hover {
+  color: var(--or-ink);
+}
 .or-nav nav {
   display: flex;
   align-items: center;
   gap: 28px;
   font-size: 14px;
   color: var(--or-muted);
-}
-.or-stars {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-  color: var(--or-ink);
-}
-.or-stars svg {
-  width: 16px;
-  height: 16px;
-  fill: currentColor;
 }
 .or-nav-cta {
   display: flex;
@@ -181,29 +182,6 @@
   font-size: 13px;
   color: var(--or-muted);
   margin-top: 16px !important;
-}
-.or-sponsor-credit {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  align-items: center;
-  width: fit-content;
-  font-size: 12px;
-  color: var(--or-muted);
-}
-.or-sponsor-credit img {
-  width: 76px;
-  height: 24px;
-  object-fit: contain;
-  margin: 12px;
-}
-.or-hero .or-sponsor-credit {
-  margin-top: 32px;
-  padding-top: 12px;
-  border-top: 1px solid var(--or-line);
-}
-.or-sponsor-disclosure {
-  font-size: 11px;
 }
 .or-preview {
   border: 1px solid var(--or-line);
@@ -490,99 +468,6 @@
   line-height: 1.7;
   margin-top: 8px !important;
 }
-.or-technical {
-  background: var(--or-ink);
-  color: white;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
-  padding: 48px 40px;
-}
-.or-technical .or-eyebrow {
-  color: #e7b591;
-}
-.or-technical p:not(.or-eyebrow) {
-  margin-top: 20px;
-  color: #bdbdb5;
-  font-size: 14px;
-  line-height: 1.7;
-}
-.or-technical .or-text-link {
-  margin-top: 24px;
-}
-.or-runtime {
-  display: grid;
-  gap: 20px;
-  align-content: center;
-}
-.or-runtime > div {
-  display: grid;
-  grid-template-columns: 1fr 1.4fr;
-  border-bottom: 1px solid #4a4a43;
-  padding-bottom: 20px;
-  gap: 6px 20px;
-}
-.or-runtime .or-mono {
-  color: #bdbdb5;
-  grid-row: span 2;
-}
-.or-runtime strong {
-  font-size: 16px;
-  font-weight: 500;
-}
-.or-runtime div > span:last-child {
-  font-size: 12px;
-  color: #bdbdb5;
-}
-.or-provider-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px;
-  margin-top: 32px;
-}
-.or-provider-grid article {
-  padding-top: 24px;
-  border-top: 2px solid var(--or-line);
-}
-.or-provider-grid .or-provider-zernio {
-  border-color: var(--color-zernio-coral);
-}
-.or-provider-title > span {
-  display: block;
-  font-size: 12px;
-  color: var(--or-muted);
-  margin-top: 8px;
-}
-.or-provider-grid p,
-.or-provider-grid li {
-  font-size: 14px;
-  line-height: 1.7;
-}
-.or-provider-grid ul {
-  padding-left: 18px;
-  margin-block: 20px;
-  color: var(--or-muted);
-}
-.or-provider-grid li {
-  padding-left: 4px;
-  margin-block: 8px;
-}
-.or-provider-zernio .or-text-link {
-  color: var(--color-zernio-charcoal);
-  text-decoration: underline;
-}
-.or-provider-guide {
-  display: block;
-  width: fit-content;
-  margin-top: 12px;
-  font-size: 12px;
-  text-decoration: underline;
-}
-.or-setup-note {
-  font-size: 12px;
-  margin-top: 32px !important;
-  max-width: 700px;
-}
 .or-faq {
   display: grid;
   grid-template-columns: 0.8fr 1.2fr;
@@ -664,21 +549,11 @@
   .or-nav nav {
     gap: 16px;
   }
-  .or-how,
-  .or-technical {
+  .or-how {
     gap: 32px;
   }
   .or-hero h1 {
     font-size: 48px;
-  }
-  .or-sponsor-credit {
-    gap: 6px;
-  }
-  .or-sponsor-disclosure {
-    flex-basis: 100%;
-  }
-  .or-footer-bottom .or-sponsor-disclosure {
-    flex-basis: auto;
   }
 }
 @media (max-width: 760px) {
@@ -689,7 +564,7 @@
     min-height: 72px;
     gap: 12px;
   }
-  .or-nav nav a:not(.or-stars) {
+  .or-nav nav a {
     display: none;
   }
   .or-wordmark {
@@ -715,12 +590,6 @@
     font-size: 16px;
     max-width: 520px;
   }
-  .or-hero .or-sponsor-credit {
-    margin-top: 24px;
-  }
-  .or-sponsor-disclosure {
-    flex-basis: auto;
-  }
   .or-principles {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -734,8 +603,6 @@
   }
   .or-how,
   .or-feature-grid,
-  .or-technical,
-  .or-provider-grid,
   .or-faq {
     grid-template-columns: 1fr;
     gap: 32px;
@@ -748,12 +615,6 @@
   }
   .or-feature-grid {
     margin-top: 24px;
-  }
-  .or-technical {
-    padding: 32px 24px;
-  }
-  .or-runtime {
-    margin-top: 0;
   }
   .or-closing {
     padding-block: 56px;
@@ -795,8 +656,8 @@
   .or-container {
     width: calc(100% - 32px);
   }
-  .or-sponsor-disclosure {
-    flex-basis: 100%;
+  .or-byline {
+    display: none;
   }
   .or-preview-body {
     padding: 16px;
